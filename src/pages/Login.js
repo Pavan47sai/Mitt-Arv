@@ -22,11 +22,19 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // Basic validation
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      setLoading(false);
+      return;
+    }
+    
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/'); // Redirect to home page on successful login
     } catch (e) {
-      setError(e.message || 'Invalid email or password');
+      setError(e.message || 'Invalid email or password. Please check your credentials and try again.');
     } finally {
       setLoading(false);
     }

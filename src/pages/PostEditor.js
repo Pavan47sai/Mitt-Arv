@@ -9,28 +9,52 @@ export default function PostEditor() {
   const { id } = useParams();
   const isEdit = useMemo(() => Boolean(id && id !== 'new'), [id]);
 
-  const [form, setForm] = useState({ title: '', content: '', tags: '', imageUrl: '' });
+  const [form, setForm] = useState({ 
+    title: '', 
+    content: '', 
+    tags: '', 
+    status: 'draft',
+    featured: false 
+  });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
-      const existing = getPostById(id);
-      if (!existing) {
-        setError('Post not found');
-      } else {
-        setForm({
-          title: existing.title || '',
-          content: existing.content || '',
-          tags: (existing.tags || []).join(', '),
-          imageUrl: existing.imageUrl || '',
-        });
-      }
+      loadPost();
     }
   }, [id, isEdit]);
 
-  const handleSubmit = (e) => {
+  const loadPost = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const existing = await getPostById(id);
+      if (!existing) {
+        setError('Post not found');
+        return;
+      }
+      
+      setForm({
+        title: existing.title || '',
+        content: existing.content || '',
+        tags: (existing.tags || []).join(', '),
+        status: existing.status || 'draft',
+        featured: existing.featured || false,
+      });
+    } catch (err) {
+      setError(err.message || 'Failed to load post');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSaving(true);
+    
     try {
       const payload = {
         title: form.title.trim(),
@@ -39,24 +63,38 @@ export default function PostEditor() {
           .split(',')
           .map(t => t.trim())
           .filter(Boolean),
-        imageUrl: form.imageUrl.trim(),
+        status: form.status,
+        featured: form.featured,
       };
+      
       if (!payload.title || !payload.content) {
         setError('Title and content are required');
         return;
       }
+      
+      let result;
       if (isEdit) {
-        updatePost(id, payload, user);
+        result = await updatePost(id, payload);
       } else {
-        const created = createPost(payload, user);
-        navigate(`/posts/${created.id}`);
-        return;
+        result = await createPost(payload);
       }
-      navigate(`/posts/${id}`);
+      
+      navigate(`/posts/${result._id}`);
     } catch (err) {
       setError(err.message || 'Failed to save');
+    } finally {
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="editor-container">
+        <div className="loading-spinner"></div>
+        <p>Loading post...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="editor-container">
@@ -98,35 +136,53 @@ export default function PostEditor() {
               type="text"
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              placeholder="e.g. react, javascript"
+              placeholder="e.g. react, javascript, tutorial"
               className="form-input"
             />
-            <small className="help-text">Comma-separated</small>
+            <small className="help-text">Comma-separated tags</small>
           </div>
           <div className="form-group">
-            <label>Image URL (optional)</label>
-            <input
-              type="url"
-              value={form.imageUrl}
-              onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              placeholder="https://..."
-              className="form-input"
-            />
+            <label>Status</label>
+            <select
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value })}
+              className="form-select"
+            >
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
           </div>
         </div>
 
-        {form.imageUrl && (
-          <div className="image-preview">
-            <img src={form.imageUrl} alt="Preview" />
-          </div>
-        )}
+        <div className="form-group">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={form.featured}
+              onChange={(e) => setForm({ ...form, featured: e.target.checked })}
+              className="form-checkbox"
+            />
+            <span>Featured Post</span>
+          </label>
+          <small className="help-text">Featured posts appear prominently on the homepage</small>
+        </div>
 
         <div className="form-actions">
-          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>
+          <button 
+            type="button" 
+            className="btn btn-secondary" 
+            onClick={() => navigate(-1)}
+            disabled={saving}
+          >
             Cancel
           </button>
-          <button type="submit" className="btn btn-primary">
-            {isEdit ? 'Save Changes' : 'Publish Post'}
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={saving}
+          >
+            {saving ? 'Saving...' : (isEdit ? 'Save Changes' : 'Publish Post')}
           </button>
         </div>
       </form>

@@ -3,10 +3,12 @@ import { useAuth } from '../AuthContext';
 import './Profile.css';
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: ''
@@ -32,9 +34,18 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically update the profile via API
-    console.log('Profile update:', formData);
-    setEditing(false);
+    setError('');
+    setSaving(true);
+    
+    try {
+      await updateProfile(formData.name);
+      setProfile({ ...profile, name: formData.name });
+      setEditing(false);
+    } catch (err) {
+      setError(err.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -46,6 +57,7 @@ export default function Profile() {
       <div className="profile-header">
         <h1>Profile Settings</h1>
         <p>Manage your account information and preferences</p>
+        {error && <div className="error-message">{error}</div>}
       </div>
 
       <div className="profile-content">
@@ -107,13 +119,18 @@ export default function Profile() {
               </div>
               
               <div className="form-actions">
-                <button type="submit" className="btn btn-primary">
-                  Save Changes
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button 
                   type="button" 
                   className="btn btn-secondary"
                   onClick={() => setEditing(false)}
+                  disabled={saving}
                 >
                   Cancel
                 </button>

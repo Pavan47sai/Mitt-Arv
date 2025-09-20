@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { BrowserRouter, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './AuthContext';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -11,19 +11,16 @@ import PostDetail from './pages/PostDetail';
 import PostEditor from './pages/PostEditor';
 import MyHistory from './pages/MyHistory';
 import ProtectedRoute from './ProtectedRoute';
+import { listPosts } from './services/posts';
 
 function Home() {
   const { user, logout } = useAuth();
   const [returning, setReturning] = useState(false);
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If logged out on home, go to login
-    if (!user) {
-      // Delay to allow provider to resolve loading state
-      const t = setTimeout(() => navigate('/login', { replace: true }), 0);
-      return () => clearTimeout(t);
-    }
     if (!user) return;
     const userKey = String(user.id || user._id || user.email || 'anon');
     const key = `visited.${userKey}`;
@@ -34,7 +31,23 @@ function Home() {
       setReturning(false);
       localStorage.setItem(key, '1');
     }
-  }, [user, navigate]);
+  }, [user]);
+
+  useEffect(() => {
+    loadRecentPosts();
+  }, []);
+
+  const loadRecentPosts = async () => {
+    try {
+      setLoadingPosts(true);
+      const data = await listPosts(1, 3); // Get first 3 posts
+      setRecentPosts(data.posts || []);
+    } catch (err) {
+      console.error('Failed to load recent posts:', err);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
   return (
     <div className="home-container">
       <div className="home-content">
@@ -67,6 +80,43 @@ function Home() {
           </div>
         )}
         
+        {/* Recent Posts Section */}
+        <div className="recent-posts-section">
+          <h2>Recent Posts</h2>
+          {loadingPosts ? (
+            <div className="loading-posts">
+              <div className="loading-spinner"></div>
+              <p>Loading recent posts...</p>
+            </div>
+          ) : recentPosts.length > 0 ? (
+            <div className="recent-posts-grid">
+              {recentPosts.map(post => (
+                <div key={post._id} className="recent-post-card">
+                  <h3 className="recent-post-title">
+                    <Link to={`/posts/${post._id}`}>{post.title}</Link>
+                  </h3>
+                  <p className="recent-post-excerpt">
+                    {post.excerpt || post.content.substring(0, 150) + '...'}
+                  </p>
+                  <div className="recent-post-meta">
+                    <span>By {post.authorName}</span>
+                    <span>•</span>
+                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="no-posts">
+              <p>No posts yet. <Link to="/editor/new">Create the first post</Link>!</p>
+            </div>
+          )}
+          <div className="recent-posts-actions">
+            <Link to="/posts" className="btn btn-outline">View All Posts</Link>
+            <Link to="/editor/new" className="btn btn-primary">Create New Post</Link>
+          </div>
+        </div>
+
         <div className="features">
           <div className="feature">
             <div className="feature-icon">📝</div>
@@ -89,31 +139,7 @@ function Home() {
   );
 }
 
-function RefreshController() {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (loading) return;
-    const key = 'app.refresh.count';
-    const current = Number(sessionStorage.getItem(key) || '0');
-    // On first mount after a full reload: decide redirect behavior
-    if (!user) {
-      // Not logged in: always go to login
-      if (location.pathname !== '/login') navigate('/login', { replace: true });
-    } else {
-      if (current >= 1 && location.pathname !== '/') {
-        navigate('/', { replace: true });
-      }
-    }
-    sessionStorage.setItem(key, String(current + 1));
-    // Reset counter on navigation changes within SPA
-    return () => {
-      sessionStorage.setItem(key, '0');
-    };
-  }, [user, loading, location.pathname, navigate]);
-  return null;
-}
+// Removed RefreshController to prevent redirect loops
 
 function Dashboard() {
   const { user } = useAuth();
@@ -170,7 +196,6 @@ export default function App() {
       <BrowserRouter>
         <div className="app">
           <Navbar />
-          <RefreshController />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

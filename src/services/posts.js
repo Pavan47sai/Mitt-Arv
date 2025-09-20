@@ -1,102 +1,115 @@
-// LocalStorage-backed Post Service
-// Shape: { id, title, content, tags: string[], imageUrl?: string, authorId, authorName, createdAt, updatedAt }
+// API-backed Post Service
+const API_BASE = '/api/posts';
 
-const STORAGE_KEY = 'blog.posts.v1';
+// Helper function to make API calls
+async function apiCall(endpoint, options = {}) {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  });
 
-function readAllPosts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch (e) {
-    return [];
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Network error' }));
+    throw new Error(error.error || 'Request failed');
   }
+
+  return response.json();
 }
 
-function writeAllPosts(posts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+// Get all published posts with pagination
+export async function listPosts(page = 1, limit = 10, search = '', tag = '') {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...(search && { search }),
+    ...(tag && { tag }),
+  });
+  
+  return apiCall(`/?${params}`);
 }
 
-export function listPosts() {
-  return readAllPosts().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+// Get current user's posts
+export async function listMyPosts(page = 1, limit = 10, status = 'all') {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...(status !== 'all' && { status }),
+  });
+  
+  return apiCall(`/my?${params}`);
 }
 
-export function getPostById(postId) {
-  return readAllPosts().find(p => String(p.id) === String(postId)) || null;
+// Get single post by ID
+export async function getPostById(postId) {
+  const data = await apiCall(`/${postId}`);
+  return data.post;
 }
 
-export function listPostsByAuthor(authorId) {
-  return readAllPosts()
-    .filter(p => String(p.authorId) === String(authorId))
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+// Create new post
+export async function createPost({ title, content, tags = [], status = 'draft', featured = false }) {
+  const data = await apiCall('/', {
+    method: 'POST',
+    body: JSON.stringify({
+      title,
+      content,
+      tags,
+      status,
+      featured,
+    }),
+  });
+  return data.post;
 }
 
-export function createPost({ title, content, tags = [], imageUrl }, currentUser) {
-  const now = new Date().toISOString();
-  const post = {
-    id: Date.now().toString(),
-    title: String(title || '').trim(),
-    content: String(content || '').trim(),
-    tags: Array.isArray(tags) ? tags.map(t => String(t).trim()).filter(Boolean) : [],
-    imageUrl: imageUrl || '',
-    authorId: currentUser?.id || currentUser?._id || currentUser?.email || 'anonymous',
-    authorName: currentUser?.name || currentUser?.email || 'Anonymous',
-    createdAt: now,
-    updatedAt: now,
-  };
-  const posts = readAllPosts();
-  posts.unshift(post);
-  writeAllPosts(posts);
-  return post;
+// Update existing post
+export async function updatePost(postId, { title, content, tags, status, featured }) {
+  const data = await apiCall(`/${postId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      title,
+      content,
+      tags,
+      status,
+      featured,
+    }),
+  });
+  return data.post;
 }
 
-export function updatePost(postId, updates, currentUser) {
-  const posts = readAllPosts();
-  const idx = posts.findIndex(p => String(p.id) === String(postId));
-  if (idx === -1) throw new Error('Post not found');
-  const post = posts[idx];
-  const ownerId = post.authorId;
-  const actorId = currentUser?.id || currentUser?._id || currentUser?.email || 'anonymous';
-  if (String(ownerId) !== String(actorId)) throw new Error('Forbidden');
-  const now = new Date().toISOString();
-  const next = {
-    ...post,
-    title: updates.title !== undefined ? String(updates.title) : post.title,
-    content: updates.content !== undefined ? String(updates.content) : post.content,
-    tags: updates.tags !== undefined ? (Array.isArray(updates.tags) ? updates.tags : post.tags) : post.tags,
-    imageUrl: updates.imageUrl !== undefined ? updates.imageUrl : post.imageUrl,
-    updatedAt: now,
-  };
-  posts[idx] = next;
-  writeAllPosts(posts);
-  return next;
+// Delete post
+export async function deletePost(postId) {
+  return apiCall(`/${postId}`, {
+    method: 'DELETE',
+  });
 }
 
-export function deletePost(postId, currentUser) {
-  const posts = readAllPosts();
-  const idx = posts.findIndex(p => String(p.id) === String(postId));
-  if (idx === -1) throw new Error('Post not found');
-  const post = posts[idx];
-  const ownerId = post.authorId;
-  const actorId = currentUser?.id || currentUser?._id || currentUser?.email || 'anonymous';
-  if (String(ownerId) !== String(actorId)) throw new Error('Forbidden');
-  posts.splice(idx, 1);
-  writeAllPosts(posts);
+// Toggle like on post
+export async function toggleLike(postId) {
+  return apiCall(`/${postId}/like`, {
+    method: 'POST',
+  });
 }
 
+// Add comment to post
+export async function addComment(postId, content) {
+  const data = await apiCall(`/${postId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  });
+  return data.post;
+}
+
+// Get popular tags
+export async function getPopularTags() {
+  const data = await apiCall('/tags/popular');
+  return data.tags;
+}
+
+// Legacy functions for backward compatibility
 export function seedDemoPosts(currentUser) {
-  const existing = readAllPosts();
-  if (existing.length > 0) return existing;
-  const demo = [
-    createPost({
-      title: 'Welcome to Your Blog!',
-      content: 'Start writing amazing content and share your thoughts with the world.',
-      tags: ['welcome'],
-    }, currentUser || { email: 'system@demo', name: 'Demo' }),
-  ];
-  return demo;
+  // No longer needed with real API
+  return Promise.resolve([]);
 }
-
-

@@ -16,11 +16,25 @@ export default function Signup() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    
+    // Basic validation
+    if (!name || !email || !password) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+    
     try {
       await signup(name, email, password);
-      navigate('/');
+      navigate('/'); // Redirect to home page on successful signup
     } catch (e) {
-      setError(e.message || 'Sign up failed');
+      setError(e.message || 'Sign up failed. Please try again.');
     } finally {
       setLoading(false);
     }

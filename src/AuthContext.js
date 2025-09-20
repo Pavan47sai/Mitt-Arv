@@ -76,8 +76,28 @@ export function AuthProvider({ children }) {
     window.location.href = '/api/auth/google';
   };
 
+  const updateProfile = async (name) => {
+    try {
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Profile update failed');
+      }
+      const data = await res.json();
+      setUser(data.user);
+      return data.user;
+    } catch (e) {
+      throw e;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, signup, logout, googleLogin }}>
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, googleLogin, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

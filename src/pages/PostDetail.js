@@ -1,36 +1,107 @@
-import React, { useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { deletePost, getPostById } from '../services/posts';
+import { deletePost, getPostById, toggleLike, addComment } from '../services/posts';
 
 export default function PostDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [commentText, setCommentText] = useState('');
+  const [submittingComment, setSubmittingComment] = useState(false);
 
-  const post = useMemo(() => getPostById(id), [id]);
+  useEffect(() => {
+    loadPost();
+  }, [id]);
 
-  if (!post) {
+  const loadPost = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const postData = await getPostById(id);
+      setPost(postData);
+    } catch (err) {
+      setError(err.message || 'Failed to load post');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const isOwner = () => {
+    if (!post || !user) return false;
+    return String(user.id) === String(post.author?._id);
+  };
+
+  const handleDelete = async () => {
+    if (!isOwner()) return;
+    const confirmed = window.confirm('Are you sure you want to delete this post?');
+    if (!confirmed) return;
+    
+    try {
+      await deletePost(id);
+      navigate('/posts');
+    } catch (err) {
+      setError(err.message || 'Failed to delete post');
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    
+    try {
+      const result = await toggleLike(id);
+      setPost(prev => ({
+        ...prev,
+        likesCount: result.likesCount,
+        isLiked: result.isLiked
+      }));
+    } catch (err) {
+      setError(err.message || 'Failed to like post');
+    }
+  };
+
+  const handleComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim() || !user) return;
+    
+    try {
+      setSubmittingComment(true);
+      const updatedPost = await addComment(id, commentText.trim());
+      setPost(updatedPost);
+      setCommentText('');
+    } catch (err) {
+      setError(err.message || 'Failed to add comment');
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
+  if (loading) {
     return (
       <div className="post-detail-container">
-        <p>Post not found.</p>
-        <Link className="btn btn-secondary" to="/posts">Back to Posts</Link>
+        <div className="loading-spinner"></div>
+        <p>Loading post...</p>
       </div>
     );
   }
 
-  const isOwner = () => {
-    const actorId = user?.id || user?._id || user?.email || 'anonymous';
-    return String(actorId) === String(post.authorId);
-  };
-
-  const onDelete = () => {
-    if (!isOwner()) return;
-    const confirmed = window.confirm('Are you sure you want to delete this post?');
-    if (!confirmed) return;
-    deletePost(post.id, user);
-    navigate('/posts');
-  };
+  if (error || !post) {
+    return (
+      <div className="post-detail-container">
+        <div className="error-message">
+          {error || 'Post not found'}
+        </div>
+        <Link className="btn btn-secondary" to="/posts">Back to Posts</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="post-detail-container">
@@ -40,20 +111,20 @@ export default function PostDetail() {
           <span>By {post.authorName}</span>
           <span>•</span>
           <span>{new Date(post.createdAt).toLocaleString()}</span>
+          <span>•</span>
+          <span>{post.views || 0} views</span>
         </div>
       </div>
-
-      {post.imageUrl && (
-        <div className="post-detail-image">
-          <img src={post.imageUrl} alt={post.title} />
-        </div>
-      )}
 
       <div className="post-detail-content">
-        <p>{post.content}</p>
+        <div className="post-content-text">
+          {post.content.split('\n').map((paragraph, index) => (
+            <p key={index}>{paragraph}</p>
+          ))}
+        </div>
       </div>
 
-      {post.tags?.length > 0 && (
+      {post.tags && post.tags.length > 0 && (
         <div className="post-detail-tags">
           {post.tags.map(tag => (
             <span key={tag} className="tag">#{tag}</span>
@@ -62,13 +133,70 @@ export default function PostDetail() {
       )}
 
       <div className="post-detail-actions">
-        <Link to="/posts" className="btn btn-secondary">Back</Link>
+        <button 
+          onClick={handleLike} 
+          className={`btn btn-like ${post.isLiked ? 'liked' : ''}`}
+        >
+          ❤️ {post.likesCount || 0} likes
+        </button>
+        
+        <Link to="/posts" className="btn btn-secondary">Back to Posts</Link>
+        
         {isOwner() && (
           <>
-            <Link to={`/editor/${post.id}`} className="btn btn-outline">Edit</Link>
-            <button onClick={onDelete} className="btn btn-danger">Delete</button>
+            <Link to={`/editor/${post._id}`} className="btn btn-outline">Edit</Link>
+            <button onClick={handleDelete} className="btn btn-danger">Delete</button>
           </>
         )}
+      </div>
+
+      {/* Comments Section */}
+      <div className="comments-section">
+        <h3>Comments ({post.commentsCount || 0})</h3>
+        
+        {user ? (
+          <form onSubmit={handleComment} className="comment-form">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Write a comment..."
+              className="comment-input"
+              rows="3"
+              required
+            />
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={submittingComment}
+            >
+              {submittingComment ? 'Posting...' : 'Post Comment'}
+            </button>
+          </form>
+        ) : (
+          <p className="login-prompt">
+            <Link to="/login">Sign in</Link> to leave a comment
+          </p>
+        )}
+
+        <div className="comments-list">
+          {post.comments && post.comments.length > 0 ? (
+            post.comments.map((comment, index) => (
+              <div key={index} className="comment">
+                <div className="comment-header">
+                  <strong>{comment.authorName}</strong>
+                  <span className="comment-date">
+                    {new Date(comment.createdAt).toLocaleString()}
+                  </span>
+                </div>
+                <div className="comment-content">
+                  {comment.content}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="no-comments">No comments yet. Be the first to comment!</p>
+          )}
+        </div>
       </div>
     </div>
   );
