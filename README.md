@@ -1,70 +1,62 @@
-# Getting Started with Create React App
+# 📝 Blog Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack **Blog Platform** built with **React + Redux (frontend)** and **Node.js + Express + MongoDB (backend)**.  
+Supports **authentication, post management, likes, comments, search, profile management**, and more.  
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📂 Download the Project
 
-### `npm start`
+You can download the full project demo video (Frontend + Backend) from Google Drive:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+🔗 [Download from Google Drive](https://drive.google.com/file/d/1ecmF-yxC9zB0fEvd8KVrzRuRbeXMyuE-/view?usp=sharing)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 🚀 Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- 🔐 **Authentication** (Signup, Login, Logout, Google OAuth, Profile update, Forgot/Reset password)
+- 📝 **Posts Management** (Create, Edit, Delete, Search, Tags, Pagination)
+- 💬 **Social Features** (Likes, Comments, Views tracking)
+- 👤 **User Dashboard** (My history, Profile, Account actions, Last login)
+- 📱 **Responsive UI** with SCSS styling
+- ⚡ **Secure** with JWT, bcrypt, rate limiting, and CORS
+- 📊 **Database Integration** with MongoDB (local/Atlas)
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Frontend**: React, Redux Toolkit, SCSS  
+- **Backend**: Node.js, Express, Passport, JWT  
+- **Database**: MongoDB (Compass/Atlas)  
+- **State Management**: Redux Toolkit  
+- **Other**: Morgan, Cookie-parser, Rate-limiter  
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📂 Project Structure
+blog/
+├── src/
+│   ├── hooks/                # Custom React hooks (e.g., useAuth, useFetch)
+│   ├── utils/                # Utility functions (e.g., validators, formatters)
+│   ├── assets/               # Images, icons, fonts
+│   ├── services/             # API service modules (e.g., authService.js, postService.js)
+│   ├── context/              # Additional React contexts (e.g., ThemeContext)
+│   ├── styles/               # Global styles, theme files
+│   └── tests/                # Frontend unit/integration tests
+├── server/
+│   ├── src/
+│   │   ├── controllers/      # Route controllers (e.g., authController.js, postController.js)
+│   │   ├── middlewares/      # Express middlewares (e.g., auth, errorHandler, rateLimiter)
+│   │   ├── validators/       # Request validation schemas
+│   │   ├── utils/            # Helper functions (e.g., token generation)
+│   │   ├── tests/            # Backend unit/integration tests
+│   │   └── services/         # Business logic (e.g., emailService.js)
+│   ├── logs/                 # Log files
+│   ├── uploads/              # Uploaded files (images, documents)
+│   └── .env.example          # Example environment file
+├── .github/                  # GitHub workflows, issue templates
+├── docs/                     # Documentation, API specs
+├── README.md                 # Project overview
+└── .gitignore                # Git ignore file
