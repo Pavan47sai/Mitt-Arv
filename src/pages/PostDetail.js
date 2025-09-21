@@ -1,35 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import { deletePost, getPostById, toggleLike, addComment } from '../services/posts';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPostById, deletePost, toggleLike, addComment } from '../store/slices/postsSlice';
+import './PostDetail.scss';
 
 export default function PostDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { currentPost: post, loading, error } = useAppSelector((state) => state.posts);
   const navigate = useNavigate();
   
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
 
   useEffect(() => {
-    loadPost();
-  }, [id]);
-
-  const loadPost = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const postData = await getPostById(id);
-      setPost(postData);
-    } catch (err) {
-      setError(err.message || 'Failed to load post');
-    } finally {
-      setLoading(false);
+    if (id) {
+      dispatch(fetchPostById(id));
     }
-  };
+  }, [dispatch, id]);
 
   const isOwner = () => {
     if (!post || !user) return false;
@@ -41,12 +30,8 @@ export default function PostDetail() {
     const confirmed = window.confirm('Are you sure you want to delete this post?');
     if (!confirmed) return;
     
-    try {
-      await deletePost(id);
-      navigate('/posts');
-    } catch (err) {
-      setError(err.message || 'Failed to delete post');
-    }
+    dispatch(deletePost(id));
+    navigate('/posts');
   };
 
   const handleLike = async () => {
@@ -55,32 +40,17 @@ export default function PostDetail() {
       return;
     }
     
-    try {
-      const result = await toggleLike(id);
-      setPost(prev => ({
-        ...prev,
-        likesCount: result.likesCount,
-        isLiked: result.isLiked
-      }));
-    } catch (err) {
-      setError(err.message || 'Failed to like post');
-    }
+    dispatch(toggleLike(id));
   };
 
   const handleComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim() || !user) return;
     
-    try {
-      setSubmittingComment(true);
-      const updatedPost = await addComment(id, commentText.trim());
-      setPost(updatedPost);
-      setCommentText('');
-    } catch (err) {
-      setError(err.message || 'Failed to add comment');
-    } finally {
-      setSubmittingComment(false);
-    }
+    setSubmittingComment(true);
+    dispatch(addComment({ postId: id, content: commentText.trim() }));
+    setCommentText('');
+    setSubmittingComment(false);
   };
 
   if (loading) {

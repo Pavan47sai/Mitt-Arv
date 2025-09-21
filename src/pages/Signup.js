@@ -1,43 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import './Auth.css';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { signupUser, clearError } from '../store/slices/authSlice';
+import './Auth.scss';
 
 export default function Signup() {
-  const { signup, googleLogin } = useAuth();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [validationError, setValidationError] = useState('');
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    
+    // Clear previous validation errors
+    setValidationError('');
     
     // Basic validation
     if (!name || !email || !password) {
-      setError('Please fill in all fields');
-      setLoading(false);
+      setValidationError('Please fill in all fields');
+      return;
+    }
+    
+    if (name.trim().length < 2) {
+      setValidationError('Name must be at least 2 characters long');
+      return;
+    }
+    
+    if (!email.includes('@')) {
+      setValidationError('Please enter a valid email address');
       return;
     }
     
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setLoading(false);
+      setValidationError('Password must be at least 6 characters long');
       return;
     }
     
-    try {
-      await signup(name, email, password);
-      navigate('/'); // Redirect to home page on successful signup
-    } catch (e) {
-      setError(e.message || 'Sign up failed. Please try again.');
-    } finally {
-      setLoading(false);
+    const result = await dispatch(signupUser({ name: name.trim(), email, password }));
+    if (signupUser.fulfilled.match(result)) {
+      navigate('/');
     }
+  };
+
+  const googleLogin = () => {
+    window.location.href = '/api/auth/google';
   };
 
   return (
@@ -48,7 +63,11 @@ export default function Signup() {
           <p>Join us today and get started</p>
         </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {(error || validationError) && (
+          <div className="error-message">
+            {error || validationError}
+          </div>
+        )}
         
         <form onSubmit={onSubmit} className="auth-form">
           <div className="form-group">

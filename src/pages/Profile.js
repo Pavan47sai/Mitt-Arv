@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../AuthContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { updateUserProfile } from '../store/slices/authSlice';
 import './Profile.css';
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const dispatch = useAppDispatch();
+  const { user, loading: authLoading, error: authError } = useAppSelector((state) => state.auth);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -38,9 +40,13 @@ export default function Profile() {
     setSaving(true);
     
     try {
-      await updateProfile(formData.name);
-      setProfile({ ...profile, name: formData.name });
-      setEditing(false);
+      const result = await dispatch(updateUserProfile({ name: formData.name }));
+      if (updateUserProfile.fulfilled.match(result)) {
+        setProfile({ ...profile, name: formData.name });
+        setEditing(false);
+      } else {
+        setError(result.payload || 'Failed to update profile');
+      }
     } catch (err) {
       setError(err.message || 'Failed to update profile');
     } finally {
@@ -48,7 +54,7 @@ export default function Profile() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <div className="profile-loading">Loading profile...</div>;
   }
 
@@ -57,7 +63,7 @@ export default function Profile() {
       <div className="profile-header">
         <h1>Profile Settings</h1>
         <p>Manage your account information and preferences</p>
-        {error && <div className="error-message">{error}</div>}
+        {(error || authError) && <div className="error-message">{error || authError}</div>}
       </div>
 
       <div className="profile-content">

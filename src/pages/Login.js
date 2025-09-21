@@ -1,119 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import './Auth.css';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loginUser, clearError } from '../store/slices/authSlice';
+import './Auth.scss';
 
 export default function Login() {
-  const { login, googleLogin } = useAuth();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [fpEmail, setFpEmail] = useState('');
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpInput, setOtpInput] = useState('');
-  const [generatedOtp, setGeneratedOtp] = useState('');
-  const [newPass, setNewPass] = useState('');
-  const [confirmPass, setConfirmPass] = useState('');
+  const [validationError, setValidationError] = useState('');
+
+  // Clear errors when component mounts
+  useEffect(() => {
+    dispatch(clearError());
+  }, [dispatch]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
+    
+    // Clear previous validation errors
+    setValidationError('');
     
     // Basic validation
     if (!email || !password) {
-      setError('Please enter both email and password');
-      setLoading(false);
+      setValidationError('Please fill in all fields');
       return;
     }
     
-    try {
-      await login(email, password);
-      navigate('/'); // Redirect to home page on successful login
-    } catch (e) {
-      setError(e.message || 'Invalid email or password. Please check your credentials and try again.');
-    } finally {
-      setLoading(false);
+    if (!email.includes('@')) {
+      setValidationError('Please enter a valid email address');
+      return;
+    }
+    
+    const result = await dispatch(loginUser({ email, password }));
+    if (loginUser.fulfilled.match(result)) {
+      navigate('/');
     }
   };
 
-  const sendOtp = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (!fpEmail) {
-      setError('Enter your registered email');
-      return;
-    }
-    // Try backend first
-    try {
-      const res = await fetch('/api/auth/forgot/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: fpEmail })
-      });
-      if (res.status === 404) {
-        setError('Account not found');
-        return;
-      }
-      if (!res.ok) throw new Error('network');
-    } catch (_) {
-      // Demo mode: consider registered if matches locally stored user
-      try {
-        const raw = localStorage.getItem('auth.demo.user.v1');
-        const demo = raw ? JSON.parse(raw) : null;
-        if (!demo || demo.email !== fpEmail) {
-          setError('Account not found');
-          return;
-        }
-      } catch (_) {
-        setError('Account not found');
-        return;
-      }
-    }
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    setGeneratedOtp(code);
-    setOtpSent(true);
-    // For demo, show OTP inline. In real app, send via email.
+  const googleLogin = () => {
+    window.location.href = '/api/auth/google';
   };
 
-  const verifyOtpAndSetPassword = (e) => {
-    e.preventDefault();
-    setError('');
-    if (otpInput !== generatedOtp) {
-      setError('Invalid OTP');
-      return;
-    }
-    if (!newPass || newPass !== confirmPass) {
-      setError('Passwords do not match');
-      return;
-    }
-    try {
-      const raw = localStorage.getItem('auth.demo.user.v1');
-      const demo = raw ? JSON.parse(raw) : null;
-      if (!demo || demo.email !== fpEmail) {
-        setError('Account not found');
-        return;
-      }
-      demo.password = newPass;
-      localStorage.setItem('auth.demo.user.v1', JSON.stringify(demo));
-      // Reset flow and let user login
-      setShowForgot(false);
-      setOtpSent(false);
-      setGeneratedOtp('');
-      setOtpInput('');
-      setNewPass('');
-      setConfirmPass('');
-      setEmail(fpEmail);
-      setPassword('');
-      setFpEmail('');
-    } catch (_) {
-      setError('Failed to update password');
-    }
-  };
+  // Removed old forgot password logic - now handled by separate page
 
   return (
     <div className="auth-container">
@@ -123,9 +54,12 @@ export default function Login() {
           <p>Sign in to your account</p>
         </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {(error || validationError) && (
+          <div className="error-message">
+            {error || validationError}
+          </div>
+        )}
         
-        {!showForgot && (
         <form onSubmit={onSubmit} className="auth-form">
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
@@ -157,68 +91,6 @@ export default function Login() {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
-        )}
-
-        {showForgot && (
-        <form onSubmit={otpSent ? verifyOtpAndSetPassword : sendOtp} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="fpemail">Registered Email</label>
-            <input
-              id="fpemail"
-              type="email"
-              value={fpEmail}
-              onChange={(e) => setFpEmail(e.target.value)}
-              required
-              placeholder="Enter your registered email"
-              className="form-input"
-              disabled={otpSent}
-            />
-          </div>
-
-          {otpSent && (
-            <>
-              <div className="form-group">
-                <label htmlFor="otp">OTP Code</label>
-                <input
-                  id="otp"
-                  type="text"
-                  value={otpInput}
-                  onChange={(e) => setOtpInput(e.target.value)}
-                  placeholder="Enter the 6-digit code"
-                  className="form-input"
-                />
-                <small className="help-text">Demo OTP: {generatedOtp}</small>
-              </div>
-              <div className="form-group">
-                <label htmlFor="newpass">New Password</label>
-                <input
-                  id="newpass"
-                  type="password"
-                  value={newPass}
-                  onChange={(e) => setNewPass(e.target.value)}
-                  placeholder="Enter new password"
-                  className="form-input"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="confirmpass">Confirm Password</label>
-                <input
-                  id="confirmpass"
-                  type="password"
-                  value={confirmPass}
-                  onChange={(e) => setConfirmPass(e.target.value)}
-                  placeholder="Re-enter new password"
-                  className="form-input"
-                />
-              </div>
-            </>
-          )}
-
-          <button type="submit" className="auth-button primary">
-            {otpSent ? 'Set Password' : 'Send OTP'}
-          </button>
-        </form>
-        )}
         
         <div className="divider">
           <span>or</span>
@@ -235,23 +107,15 @@ export default function Login() {
         </button>
         
         <div className="auth-footer">
-          {!showForgot ? (
-            <>
-              <span>
-                <button className="auth-link" onClick={() => setShowForgot(true)}>
-                  Forgot password?
-                </button>
-              </span>
-              <span> · </span>
-              <span>
-                Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
-              </span>
-            </>
-          ) : (
-            <>
-              <button className="auth-link" onClick={() => setShowForgot(false)}>Back to Sign in</button>
-            </>
-          )}
+          <span>
+            <Link to="/forgot-password" className="auth-link">
+              Forgot password?
+            </Link>
+          </span>
+          <span> · </span>
+          <span>
+            Don't have an account? <Link to="/signup" className="auth-link">Sign up</Link>
+          </span>
         </div>
       </div>
     </div>

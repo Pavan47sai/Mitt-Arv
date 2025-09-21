@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import { createPost, getPostById, updatePost } from '../services/posts';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPostById, createPost, updatePost } from '../store/slices/postsSlice';
+import './PostEditor.scss';
 
 export default function PostEditor() {
-  const { user } = useAuth();
+  const dispatch = useAppDispatch();
+  const { currentPost, loading, error } = useAppSelector((state) => state.posts);
   const navigate = useNavigate();
   const { id } = useParams();
   const isEdit = useMemo(() => Boolean(id && id !== 'new'), [id]);
@@ -16,75 +18,58 @@ export default function PostEditor() {
     status: 'draft',
     featured: false 
   });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (isEdit) {
-      loadPost();
+    if (isEdit && id) {
+      dispatch(fetchPostById(id));
     }
-  }, [id, isEdit]);
+  }, [dispatch, id, isEdit]);
 
-  const loadPost = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const existing = await getPostById(id);
-      if (!existing) {
-        setError('Post not found');
-        return;
-      }
-      
+  useEffect(() => {
+    if (currentPost && isEdit) {
       setForm({
-        title: existing.title || '',
-        content: existing.content || '',
-        tags: (existing.tags || []).join(', '),
-        status: existing.status || 'draft',
-        featured: existing.featured || false,
+        title: currentPost.title || '',
+        content: currentPost.content || '',
+        tags: (currentPost.tags || []).join(', '),
+        status: currentPost.status || 'draft',
+        featured: currentPost.featured || false,
       });
-    } catch (err) {
-      setError(err.message || 'Failed to load post');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [currentPost, isEdit]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setSaving(true);
     
-    try {
-      const payload = {
-        title: form.title.trim(),
-        content: form.content.trim(),
-        tags: form.tags
-          .split(',')
-          .map(t => t.trim())
-          .filter(Boolean),
-        status: form.status,
-        featured: form.featured,
-      };
-      
-      if (!payload.title || !payload.content) {
-        setError('Title and content are required');
-        return;
-      }
-      
-      let result;
-      if (isEdit) {
-        result = await updatePost(id, payload);
-      } else {
-        result = await createPost(payload);
-      }
-      
-      navigate(`/posts/${result._id}`);
-    } catch (err) {
-      setError(err.message || 'Failed to save');
-    } finally {
+    const payload = {
+      title: form.title.trim(),
+      content: form.content.trim(),
+      tags: form.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean),
+      status: form.status,
+      featured: form.featured,
+    };
+    
+    if (!payload.title || !payload.content) {
       setSaving(false);
+      return;
     }
+    
+    let result;
+    if (isEdit) {
+      result = await dispatch(updatePost({ postId: id, ...payload }));
+    } else {
+      result = await dispatch(createPost(payload));
+    }
+    
+    if (updatePost.fulfilled.match(result) || createPost.fulfilled.match(result)) {
+      navigate(`/posts/${result.payload._id}`);
+    }
+    
+    setSaving(false);
   };
 
   if (loading) {

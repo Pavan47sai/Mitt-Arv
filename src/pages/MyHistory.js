@@ -1,32 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import { listMyPosts } from '../services/posts';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchMyPosts } from '../store/slices/postsSlice';
+import './MyHistory.scss';
 
 export default function MyHistory() {
-  const { user } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { myPosts: posts, loading, error } = useAppSelector((state) => state.posts);
 
   useEffect(() => {
-    if (!user) return;
-    loadMyPosts();
-  }, [user]);
-
-  const loadMyPosts = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await listMyPosts(1, 50); // Get up to 50 posts
-      setPosts(data.posts || []);
-    } catch (err) {
-      setError(err.message || 'Failed to load posts');
-      setPosts([]);
-    } finally {
-      setLoading(false);
+    if (user) {
+      dispatch(fetchMyPosts({ page: 1, limit: 50 }));
     }
-  };
+  }, [dispatch, user]);
 
   if (loading) {
     return (

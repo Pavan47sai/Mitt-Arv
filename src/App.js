@@ -1,24 +1,29 @@
 import React, { useEffect, useState } from 'react';
-import './App.css';
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './AuthContext';
+import './App.scss';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { fetchUser } from './store/slices/authSlice';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import ForgotPassword from './pages/ForgotPassword';
 import Profile from './pages/Profile';
 import Posts from './pages/Posts';
 import PostDetail from './pages/PostDetail';
 import PostEditor from './pages/PostEditor';
 import MyHistory from './pages/MyHistory';
 import ProtectedRoute from './ProtectedRoute';
-import { listPosts } from './services/posts';
+import { fetchPosts } from './store/slices/postsSlice';
 
 function Home() {
-  const { user, logout } = useAuth();
+  const dispatch = useAppDispatch();
+  const { user, loading: authLoading } = useAppSelector((state) => state.auth);
+  const { posts, loading: postsLoading } = useAppSelector((state) => state.posts);
   const [returning, setReturning] = useState(false);
-  const [recentPosts, setRecentPosts] = useState([]);
-  const [loadingPosts, setLoadingPosts] = useState(false);
-  const navigate = useNavigate();
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -34,25 +39,74 @@ function Home() {
   }, [user]);
 
   useEffect(() => {
-    loadRecentPosts();
+    if (!user && !authLoading) {
+      dispatch(fetchUser());
+    }
+  }, [dispatch, user, authLoading]);
+
+  useEffect(() => {
+    dispatch(fetchPosts({ page: 1, limit: 3 }));
+  }, [dispatch]);
+
+  // Handle URL parameters for welcome messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const welcome = urlParams.get('welcome');
+    const newUser = urlParams.get('newUser');
+    
+    if (welcome === 'true') {
+      if (newUser === 'true') {
+        setWelcomeMessage('Welcome to our blog platform! Your account has been created successfully.');
+        setIsNewUser(true);
+      } else {
+        setWelcomeMessage('Welcome back! You have successfully signed in.');
+        setIsNewUser(false);
+      }
+      
+      // Clear URL parameters after showing message
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, newUrl);
+      
+      // Hide welcome message after 5 seconds
+      setTimeout(() => {
+        setWelcomeMessage('');
+        setIsNewUser(false);
+      }, 5000);
+    }
   }, []);
 
-  const loadRecentPosts = async () => {
-    try {
-      setLoadingPosts(true);
-      const data = await listPosts(1, 3); // Get first 3 posts
-      setRecentPosts(data.posts || []);
-    } catch (err) {
-      console.error('Failed to load recent posts:', err);
-    } finally {
-      setLoadingPosts(false);
-    }
+  const handleLogout = async () => {
+    // This will be handled by Redux
   };
   return (
     <div className="home-container">
       <div className="home-content">
         <h1 className="home-title">Welcome to Your Blog</h1>
         <p className="home-subtitle">Share your thoughts and connect with others</p>
+        
+        {/* Welcome Message */}
+        {welcomeMessage && (
+          <div className={`welcome-message ${isNewUser ? 'new-user' : 'returning-user'}`}>
+            <div className="welcome-icon">
+              {isNewUser ? '🎉' : '👋'}
+            </div>
+            <div className="welcome-text">
+              <h3>{isNewUser ? 'Welcome to our platform!' : 'Welcome back!'}</h3>
+              <p>{welcomeMessage}</p>
+              {isNewUser && (
+                <div className="new-user-tips">
+                  <p>Here's what you can do:</p>
+                  <ul>
+                    <li>Create your first blog post</li>
+                    <li>Explore other users' posts</li>
+                    <li>Update your profile</li>
+                    <li>Connect with the community</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         
         {user ? (
           <div className="user-section">
@@ -63,7 +117,7 @@ function Home() {
                 <Link to="/dashboard" className="btn btn-primary">Go to Dashboard</Link>
                 <Link to="/posts" className="btn btn-outline">View Posts</Link>
                 <Link to="/profile" className="btn btn-outline">Profile</Link>
-                <button onClick={logout} className="btn btn-secondary">Logout</button>
+                <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
               </div>
             </div>
           </div>
@@ -83,14 +137,14 @@ function Home() {
         {/* Recent Posts Section */}
         <div className="recent-posts-section">
           <h2>Recent Posts</h2>
-          {loadingPosts ? (
+          {postsLoading ? (
             <div className="loading-posts">
               <div className="loading-spinner"></div>
               <p>Loading recent posts...</p>
             </div>
-          ) : recentPosts.length > 0 ? (
+          ) : posts.length > 0 ? (
             <div className="recent-posts-grid">
-              {recentPosts.map(post => (
+              {posts.map(post => (
                 <div key={post._id} className="recent-post-card">
                   <h3 className="recent-post-title">
                     <Link to={`/posts/${post._id}`}>{post.title}</Link>
@@ -142,7 +196,7 @@ function Home() {
 // Removed RefreshController to prevent redirect loops
 
 function Dashboard() {
-  const { user } = useAuth();
+  const { user } = useAppSelector((state) => state.auth);
   return (
     <div className="dashboard-container">
       <div className="dashboard-header">
@@ -190,16 +244,16 @@ function Dashboard() {
   );
 }
 
-export default function App() {
+function AppContent() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="app">
-          <Navbar />
-          <Routes>
+    <BrowserRouter>
+      <div className="app">
+        <Navbar />
+        <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route
               path="/dashboard"
               element={
@@ -248,9 +302,16 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+        </Routes>
+      </div>
+    </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <AppContent />
+    </Provider>
   );
 }

@@ -43,6 +43,92 @@ body {
   opacity: 0.9;
 }
 
+/* Welcome Message Styles */
+.welcome-message {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 0 0 32px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-align: left;
+  animation: slideInDown 0.5s ease-out;
+}
+
+.welcome-message.new-user {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.welcome-message.returning-user {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.welcome-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.welcome-text {
+  flex: 1;
+  color: #1f2937;
+}
+
+.welcome-text h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.welcome-text p {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.new-user-tips {
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.new-user-tips p {
+  margin: 0 0 12px 0;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.new-user-tips ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #047857;
+}
+
+.new-user-tips li {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .user-section, .auth-section {
   margin-bottom: 64px;
 }

@@ -1,73 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
-import { listPosts, deletePost, toggleLike } from '../services/posts';
-import './Posts.css';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchPosts, deletePost, toggleLike } from '../store/slices/postsSlice';
+import './Posts.scss';
 
 export default function Posts() {
-  const { user } = useAuth();
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0
-  });
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+  const { posts, pagination, loading, error } = useAppSelector((state) => state.posts);
   const [search, setSearch] = useState('');
-  const [tag, setTag] = useState('');
-
-  const loadPosts = async (page = 1, searchTerm = '', tagFilter = '') => {
-    try {
-      setLoading(true);
-      setError('');
-      const data = await listPosts(page, pagination.limit, searchTerm, tagFilter);
-      setPosts(data.posts);
-      setPagination(data.pagination);
-    } catch (err) {
-      setError(err.message || 'Failed to load posts');
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    loadPosts(1, search, tag);
-  }, [user, search, tag]);
+    dispatch(fetchPosts({ page: 1, limit: 10, search, tag: '' }));
+  }, [dispatch, search]);
 
   const handleDeletePost = async (postId) => {
     if (!window.confirm('Are you sure you want to delete this post?')) return;
-    
-    try {
-      await deletePost(postId);
-      setPosts(posts.filter(post => post._id !== postId));
-    } catch (err) {
-      setError(err.message || 'Failed to delete post');
-    }
+    dispatch(deletePost(postId));
   };
 
   const handleLike = async (postId) => {
-    try {
-      const result = await toggleLike(postId);
-      setPosts(posts.map(post => 
-        post._id === postId 
-          ? { ...post, likesCount: result.likesCount, isLiked: result.isLiked }
-          : post
-      ));
-    } catch (err) {
-      setError(err.message || 'Failed to like post');
-    }
+    dispatch(toggleLike(postId));
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    loadPosts(1, search, tag);
+    dispatch(fetchPosts({ page: 1, limit: 10, search, tag: '' }));
   };
 
   const handlePageChange = (newPage) => {
-    loadPosts(newPage, search, tag);
+    dispatch(fetchPosts({ page: newPage, limit: 10, search, tag: '' }));
   };
 
   if (loading) {
