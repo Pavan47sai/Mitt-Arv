@@ -37,6 +37,7 @@ You can download the full project demo video (Frontend + Backend) from Google Dr
 
 ## 📂 Project Structure
 
+```
 blog/
 ├── src/                    # React frontend
 │   ├── components/         # Reusable components
@@ -67,7 +68,7 @@ blog/
 │   └── config.env         # Environment variables
 ├── package.json           # Frontend dependencies
 └── start-dev.js          # Development startup script
-
+```
 ---
 
 #### **User Model**
