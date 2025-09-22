@@ -67,6 +67,7 @@ blog/
 │   ├── package.json       # Backend dependencies
 │   └── config.env         # Environment variables
 ├── package.json           # Frontend dependencies
+├── start-app.bat          # Windows Script
 └── start-dev.js          # Development startup script
 ```
 ---
