@@ -36,6 +36,7 @@ You can download the full project demo video (Frontend + Backend) from Google Dr
 ---
 
 ## 📂 Project Structure
+```
 blog/
 ├── src/
 │   ├── hooks/                # Custom React hooks (e.g., useAuth, useFetch)
@@ -52,4 +53,4 @@ blog/
 ├── start-app.bat             # Windows script
 └── .gitignore                # Git ignore file
 
-
+```
