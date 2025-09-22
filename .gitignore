@@ -21,4 +21,9 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-"server/*.env" 
+
+# server environment files
+server/*.env
+
+# large media files
+*.mp4
