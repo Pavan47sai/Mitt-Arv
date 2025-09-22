@@ -1,70 +1,198 @@
-# Getting Started with Create React App
+# 📝 Blog Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack **Blog Platform** built with **React + Redux (frontend)** and **Node.js + Express + MongoDB (backend)**.  
+Supports **authentication, post management, likes, comments, search, profile management**, and more.  
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 📂 Project Presentation
 
-### `npm start`
+You can download the full project demo video (Frontend + Backend) from Google Drive:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+🔗 [BlogApp](https://drive.google.com/file/d/1ecmF-yxC9zB0fEvd8KVrzRuRbeXMyuE-/view?usp=sharing)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## 🚀 Features
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- 🔐 **Authentication** (Signup, Login, Logout, Google OAuth, Profile update, Forgot/Reset password)
+- 📝 **Posts Management** (Create, Edit, Delete, Search, Tags, Pagination)
+- 💬 **Social Features** (Likes, Comments, Views tracking)
+- 👤 **User Dashboard** (My history, Profile, Account actions, Last login)
+- 📱 **Responsive UI** with SCSS styling
+- ⚡ **Secure** with JWT, bcrypt, rate limiting, and CORS
+- 📊 **Database Integration** with MongoDB (local/Atlas)
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## 🛠️ Tech Stack
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- **Frontend**: React, Redux Toolkit, SCSS  
+- **Backend**: Node.js, Express, Passport, JWT  
+- **Database**: MongoDB (Compass/Atlas)  
+- **State Management**: Redux Toolkit  
+- **Other**: Morgan, Cookie-parser, Rate-limiter  
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 📂 Project Structure
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+blog/
+├── src/                    # React frontend
+│   ├── components/         # Reusable components
+│   │   ├── Navbar.js      # Navigation component
+│   │   └── Navbar.scss     # Navigation styles
+│   ├── pages/             # Page components
+│   │   ├── Login.js       # Login page
+│   │   ├── Signup.js      # Signup page
+│   │   ├── Profile.js     # User profile page
+│   │   ├── Posts.js       # Blog posts page
+│   │   ├── Auth.scss       # Authentication styles
+│   │   ├── Profile.scss    # Profile page styles
+│   │   └── Posts.scss      # Posts page styles
+│   ├── AuthContext.js     # Authentication context
+│   ├── ProtectedRoute.js  # Route protection
+│   ├── App.js            # Main app component
+│   └── App.scss           # Main app styles
+├── server/                # Express backend
+│   ├── src/
+│   │   ├── models/        # Database models
+│   │   │   └── User.js    # User model
+│   │   ├── routes/        # API routes
+│   │   │   └── auth.js    # Authentication routes
+│   │   ├── config/        # Configuration
+│   │   │   └── database.js # Database connection
+│   │   └── index.js       # Server entry point
+│   ├── package.json       # Backend dependencies
+│   └── config.env         # Environment variables
+├── package.json           # Frontend dependencies
+└── start-dev.js          # Development startup script
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+#### **User Model**
+- Email, name, password (hashed)
+- Provider (local/google)
+- Google OAuth integration
+- Account status and last login tracking
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+#### **Post Model**
+- Title, content, excerpt (auto-generated)
+- Author reference and name
+- Tags array for categorization
+- Status (draft/published/archived)
+- Featured post flag
+- Likes system with user references
+- Comments system with nested structure
+- View count tracking
+- Full-text search indexing
 
-## Learn More
+### **Frontend Components**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+#### **Pages**
+- **Home**: Recent posts preview, user dashboard
+- **Login/Signup**: Enhanced authentication with validation
+- **Posts**: Full CRUD with search, pagination, likes
+- **PostDetail**: Complete post view with comments
+- **PostEditor**: Rich editor with status management
+- **Profile**: User profile management
+- **MyHistory**: User's post history
 
-To learn React, check out the [React documentation](https://reactjs.org/).
 
-### Code Splitting
+## ✅ Current Status
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+- ✔️ Authentication (local + Google OAuth)  
+- ✔️ Post CRUD + Search + Tags + Pagination  
+- ✔️ Likes + Comments working  
+- ✔️ Profile update & Account actions  
+- ✔️ Database connected (MongoDB Compass / Atlas)  
+- ✔️ Responsive SCSS UI  
 
-### Analyzing the Bundle Size
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+## 🎯 Next Steps
 
-### Making a Progressive Web App
+- 📱 Mobile app version (Flutter + GetX)  
+- 📸 Post media upload (images, videos < 15s)  
+- 🚀 Deployment (Render/Heroku + MongoDB Atlas)  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-### Advanced Configuration
+## 🔐 Authentication Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Local Authentication
+- Email/password signup and login
+- Password hashing with bcrypt
+- JWT token-based sessions
+- Secure httpOnly cookies
 
-### Deployment
+### Google OAuth
+- Google account integration
+- Automatic account linking
+- Profile information sync
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### Security Features
+- Rate limiting on auth endpoints
+- CORS protection
+- Input validation
+- Password strength requirements
 
-### `npm run build` fails to minify
+## 📱 Pages and Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Public Pages
+- **Home** (`/`) - Landing page with features
+- **Login** (`/login`) - User authentication
+- **Signup** (`/signup`) - User registration
+
+### Protected Pages
+- **Dashboard** (`/dashboard`) - User dashboard
+- **Profile** (`/profile`) - User profile management
+- **Posts** (`/posts`) - Blog posts management
+
+### Navigation
+- Responsive navbar with user menu
+- Protected route handling
+- Automatic redirects based on auth state
+
+## 🛠️ API Endpoints
+
+### Authentication
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
+- `GET /api/auth/google` - Google OAuth login
+- `GET /api/auth/google/callback` - Google OAuth callback
+
+### Health Check
+- `GET /api/health` - Server health status
+
+
+## 📖 Prompting Techniques & AI Tools
+
+This project was enhanced using AI coding assistants such as **Cursor** and **ChatGPT**:
+
+- **Prompt Engineering**: Clear step-by-step prompts for CRUD, API connection, Redux slice creation, SCSS styling.
+- **Refactoring via AI**: Fixed runtime errors, optimized imports, and added authentication flows.
+- **Rapid Prototyping**: AI helped scaffold pages like Login, Signup, Forgot Password, and Editor.
+- **Troubleshooting**: Used AI to resolve MongoDB/Express issues, JWT bugs, and frontend state errors.
+
+### Challenges Faced
+
+- Handling runtime errors due to missing context providers (useAuth null issue).  
+- MongoDB Compass vs Atlas migration.  
+- Keeping Redux state synced with asynchronous APIs.  
+- SCSS layout alignment across all pages.
+
+---
+
+## 📊 Database Schema
+
+### Users
+```json
+{
+  "email": "string",
+  "name": "string",
+  "password": "hashed string",
+  "provider": "local|google",
+  "lastLogin": "date"
+}
