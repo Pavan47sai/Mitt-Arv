@@ -5,11 +5,11 @@ Supports **authentication, post management, likes, comments, search, profile man
 
 ---
 
-## 📂 Download the Project
+## 📂 Project Presentation
 
 You can download the full project demo video (Frontend + Backend) from Google Drive:
 
-🔗 [Download from Google Drive](https://drive.google.com/file/d/1ecmF-yxC9zB0fEvd8KVrzRuRbeXMyuE-/view?usp=sharing)
+🔗 [BlogApp](https://drive.google.com/file/d/1ecmF-yxC9zB0fEvd8KVrzRuRbeXMyuE-/view?usp=sharing)
 
 ---
 
@@ -46,17 +46,10 @@ blog/
 │   ├── styles/               # Global styles, theme files
 │   └── tests/                # Frontend unit/integration tests
 ├── server/
-│   ├── src/
-│   │   ├── controllers/      # Route controllers (e.g., authController.js, postController.js)
-│   │   ├── middlewares/      # Express middlewares (e.g., auth, errorHandler, rateLimiter)
-│   │   ├── validators/       # Request validation schemas
-│   │   ├── utils/            # Helper functions (e.g., token generation)
-│   │   ├── tests/            # Backend unit/integration tests
-│   │   └── services/         # Business logic (e.g., emailService.js)
-│   ├── logs/                 # Log files
-│   ├── uploads/              # Uploaded files (images, documents)
-│   └── .env.example          # Example environment file
 ├── .github/                  # GitHub workflows, issue templates
 ├── docs/                     # Documentation, API specs
 ├── README.md                 # Project overview
+├── start-app.bat             # Windows script
 └── .gitignore                # Git ignore file
+
+
