@@ -1,70 +1,546 @@
-# Getting Started with Create React App
+# 📝 Blog Application
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A full-stack **Blog Platform** built with **React + Redux (frontend)** and **Node.js + Express + MongoDB (backend)**.  
+Supports **authentication, post management, likes, comments, search, profile management**, and more.  
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## 🚀 Features
 
-### `npm start`
+- 🔐 **Authentication** (Signup, Login, Logout, Google OAuth, Profile update, Forgot/Reset password)
+- 📝 **Posts Management** (Create, Edit, Delete, Search, Tags, Pagination)
+- 💬 **Social Features** (Likes, Comments, Views tracking)
+- 👤 **User Dashboard** (My history, Profile, Account actions, Last login)
+- 📱 **Responsive UI** with SCSS styling
+- ⚡ **Secure** with JWT, bcrypt, rate limiting, and CORS
+- 📊 **Database Integration** with MongoDB (local/Atlas)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## 🛠️ Tech Stack
 
-### `npm test`
+- **Frontend**: React, Redux Toolkit, SCSS  
+- **Backend**: Node.js, Express, Passport, JWT  
+- **Database**: MongoDB (Compass/Atlas)  
+- **State Management**: Redux Toolkit  
+- **Other**: Morgan, Cookie-parser, Rate-limiter  
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## 📂 Project Structure
+- for Backend
+```
+ server/                # Express backend
+   ├── src/
+   │   ├── models/        # Database models
+   │   │   └── User.js    # User model
+   │   ├── routes/        # API routes
+   │   │   └── auth.js    # Authentication routes
+   │   ├── config/        # Configuration
+   │   │   └── database.js # Database connection
+   │   └── index.js       # Server entry point
+   ├── package.json       # Backend dependencies
+   └── config.env         # Environment variables
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+# 📚 Blog Posts Management API Endpoints
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🔐 **Authentication Required Endpoints**
+*These endpoints require a valid JWT token in cookies*
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## 📝 **Posts Management**
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **1. Get All Published Posts**
+```http
+GET /api/posts
+```
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Posts per page (default: 10)
+- `search` (optional): Search term for full-text search
+- `tag` (optional): Filter by specific tag
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+**Response:**
+```json
+{
+  "posts": [
+    {
+      "_id": "post_id",
+      "title": "Post Title",
+      "excerpt": "Post excerpt...",
+      "author": {
+        "_id": "author_id",
+        "name": "Author Name",
+        "email": "author@email.com"
+      },
+      "authorName": "Author Name",
+      "tags": ["tag1", "tag2"],
+      "status": "published",
+      "featured": false,
+      "likesCount": 5,
+      "views": 100,
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 25,
+    "pages": 3
+  }
+}
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### **2. Get Current User's Posts** 🔐
+```http
+GET /api/posts/my
+```
+**Query Parameters:**
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Posts per page (default: 10)
+- `status` (optional): Filter by status (draft/published/archived/all)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+**Response:** Same as above but only user's posts
 
-## Learn More
+### **3. Get Single Post by ID**
+```http
+GET /api/posts/:id
+```
+**Response:**
+```json
+{
+  "post": {
+    "_id": "post_id",
+    "title": "Post Title",
+    "content": "Full post content...",
+    "excerpt": "Post excerpt...",
+    "author": {
+      "_id": "author_id",
+      "name": "Author Name",
+      "email": "author@email.com"
+    },
+    "authorName": "Author Name",
+    "tags": ["tag1", "tag2"],
+    "status": "published",
+    "featured": false,
+    "likes": ["user_id1", "user_id2"],
+    "likesCount": 5,
+    "views": 100,
+    "comments": [
+      {
+        "_id": "comment_id",
+        "author": "author_id",
+        "authorName": "Commenter Name",
+        "content": "Comment content...",
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+      }
+    ],
+    "commentsCount": 3,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### **4. Create New Post** 🔐
+```http
+POST /api/posts
+```
+**Request Body:**
+```json
+{
+  "title": "Post Title",
+  "content": "Post content...",
+  "tags": ["tag1", "tag2"],
+  "status": "draft",
+  "featured": false
+}
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**Response:**
+```json
+{
+  "post": {
+    "_id": "new_post_id",
+    "title": "Post Title",
+    "content": "Post content...",
+    "excerpt": "Auto-generated excerpt...",
+    "author": "user_id",
+    "authorName": "User Name",
+    "tags": ["tag1", "tag2"],
+    "status": "draft",
+    "featured": false,
+    "likes": [],
+    "likesCount": 0,
+    "views": 0,
+    "comments": [],
+    "commentsCount": 0,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
 
-### Code Splitting
+### **5. Update Post** 🔐
+```http
+PUT /api/posts/:id
+```
+**Request Body:**
+```json
+{
+  "title": "Updated Title",
+  "content": "Updated content...",
+  "tags": ["updated", "tags"],
+  "status": "published",
+  "featured": true
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**Response:** Updated post object
 
-### Analyzing the Bundle Size
+### **6. Delete Post** 🔐
+```http
+DELETE /api/posts/:id
+```
+**Response:**
+```json
+{
+  "message": "Post deleted successfully"
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## ❤️ **Social Features**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### **7. Toggle Like on Post** 🔐
+```http
+POST /api/posts/:id/like
+```
+**Response:**
+```json
+{
+  "likesCount": 6,
+  "isLiked": true
+}
+```
 
-### Advanced Configuration
+### **8. Add Comment to Post** 🔐
+```http
+POST /api/posts/:id/comments
+```
+**Request Body:**
+```json
+{
+  "content": "Comment content..."
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+**Response:** Updated post with new comment
 
-### Deployment
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## 🔍 **Search & Discovery**
 
-### `npm run build` fails to minify
+### **9. Get Popular Tags**
+```http
+GET /api/posts/tags/popular
+```
+**Response:**
+```json
+{
+  "tags": [
+    {
+      "_id": "javascript",
+      "count": 15
+    },
+    {
+      "_id": "react",
+      "count": 12
+    },
+    {
+      "_id": "tutorial",
+      "count": 8
+    }
+  ]
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+---
+
+## 🔐 **Authentication Endpoints**
+
+### **10. User Registration**
+```http
+POST /api/auth/signup
+```
+**Request Body:**
+```json
+{
+  "name": "User Name",
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+### **11. User Login**
+```http
+POST /api/auth/login
+```
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+### **12. Get Current User** 🔐
+```http
+GET /api/auth/me
+```
+**Response:**
+```json
+{
+  "user": {
+    "_id": "user_id",
+    "name": "User Name",
+    "email": "user@example.com",
+    "provider": "local",
+    "isActive": true,
+    "lastLogin": "2024-01-01T00:00:00.000Z",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+}
+```
+
+### **13. Update User Profile** 🔐
+```http
+PUT /api/auth/profile
+```
+**Request Body:**
+```json
+{
+  "name": "Updated Name"
+}
+```
+
+### **14. User Logout** 🔐
+```http
+POST /api/auth/logout
+```
+**Response:**
+```json
+{
+  "ok": true
+}
+```
+
+### **15. Google OAuth Login**
+```http
+GET /api/auth/google
+```
+Redirects to Google OAuth
+
+### **16. Google OAuth Callback**
+```http
+GET /api/auth/google/callback
+```
+Handles Google OAuth callback
+
+---
+
+## 🏥 **Health Check**
+
+### **17. Server Health**
+```http
+GET /api/health
+```
+**Response:**
+```json
+{
+  "ok": true
+}
+```
+
+---
+
+## 📊 **Database Schema**
+
+### **Post Model**
+```javascript
+{
+  _id: ObjectId,
+  title: String (required, max: 200),
+  content: String (required, max: 10000),
+  excerpt: String (auto-generated, max: 300),
+  author: ObjectId (ref: User, required),
+  authorName: String (required),
+  tags: [String],
+  status: String (enum: ['draft', 'published', 'archived'], default: 'draft'),
+  featured: Boolean (default: false),
+  likes: [ObjectId] (ref: User),
+  likesCount: Number (default: 0),
+  views: Number (default: 0),
+  comments: [{
+    author: ObjectId (ref: User),
+    authorName: String,
+    content: String (max: 1000),
+    createdAt: Date,
+    updatedAt: Date
+  }],
+  commentsCount: Number (default: 0),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+### **User Model**
+```javascript
+{
+  _id: ObjectId,
+  email: String (required, unique),
+  name: String (required),
+  password: String (hashed, required for local),
+  provider: String (enum: ['local', 'google'], default: 'local'),
+  googleId: String (unique, sparse),
+  avatar: String (optional),
+  isActive: Boolean (default: true),
+  lastLogin: Date (default: now),
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+---
+
+## 🛡️ **Security Features**
+
+- **Rate Limiting**: 30 requests per minute per IP
+- **JWT Authentication**: Secure token-based auth
+- **Password Hashing**: bcrypt with salt rounds
+- **Input Validation**: All inputs validated and sanitized
+- **CORS Protection**: Configured for frontend origin
+- **HTTP-Only Cookies**: Secure cookie storage
+
+---
+
+## 🚀 **Usage Examples**
+
+### **Create a Post**
+```javascript
+const response = await fetch('/api/posts', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({
+    title: 'My First Post',
+    content: 'This is the content of my first post!',
+    tags: ['blog', 'first-post'],
+    status: 'published',
+    featured: false
+  })
+});
+const data = await response.json();
+```
+
+### **Search Posts**
+```javascript
+const response = await fetch('/api/posts?search=javascript&tag=tutorial&page=1&limit=5');
+const data = await response.json();
+```
+
+### **Like a Post**
+```javascript
+const response = await fetch(`/api/posts/${postId}/like`, {
+  method: 'POST',
+  credentials: 'include'
+});
+const data = await response.json();
+```
+
+---
+
+## ✅ **All Endpoints Implemented and Working!**
+
+The complete blog posts management API is fully implemented with:
+- ✅ Full CRUD operations
+- ✅ Authentication & authorization
+- ✅ Social features (likes, comments)
+- ✅ Search & filtering
+- ✅ Pagination
+- ✅ Rate limiting
+- ✅ Input validation
+- ✅ Error handling
+- ✅ Database integration
+
+# MongoDB Compass Setup Guide
+
+## Prerequisites
+1. Install MongoDB Community Server on your local machine
+2. Install MongoDB Compass (GUI tool for MongoDB)
+
+## Setup Steps
+
+### 1. Install MongoDB Community Server
+- Download from: https://www.mongodb.com/try/download/community
+- Follow the installation wizard
+- Make sure to install MongoDB as a Windows Service
+
+### 2. Install MongoDB Compass
+- Download from: https://www.mongodb.com/products/compass
+- Install and launch MongoDB Compass
+
+### 3. Connect to Local MongoDB
+1. Open MongoDB Compass
+2. Use the default connection string: `mongodb://localhost:27017`
+3. Click "Connect"
+
+### 4. Create Database
+1. In MongoDB Compass, click "Create Database"
+2. Database Name: `blog_auth`
+3. Collection Name: `users`
+4. Click "Create Database"
+
+### 5. Verify Connection
+- You should see the `blog_auth` database with a `users` collection
+- The application will automatically create the necessary collections when you run it
+
+## Running the Application
+
+### Start MongoDB Service
+```bash
+# Start MongoDB service (if not already running)
+net start MongoDB
+```
+
+### Start the Application
+```bash
+# Terminal 1 - Backend
+cd server
+npm run dev
+
+# Terminal 2 - Frontend  
+cd ..
+npm start
+```
+
+### Access Points
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:4000
+- MongoDB Compass: Connect to `mongodb://localhost:27017`
+
+## Database Collections
+The application will create these collections automatically:
+- `users` - Stores user accounts and authentication data
+- `sessions` - Stores user sessions (if using session-based auth)
+
+## Troubleshooting
+1. **MongoDB not starting**: Check if the service is running in Windows Services
+2. **Connection refused**: Ensure MongoDB is running on port 27017
+3. **Database not found**: The app will create the database automatically on first run
